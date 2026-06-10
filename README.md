@@ -1,38 +1,51 @@
 # Digital Clock Widget
 
-A browser-based clock widget with four modes: Clock, Stopwatch, Timer, and Alarm. Styled to look like a physical desk clock with a dark/pink theme.
+A browser-based clock widget with four modes: Clock, Stopwatch, Timer, and Alarm. No build step, no dependencies.
+
+## Essential Files
+
+| File | Role |
+|---|---|
+| `digi.html` | Structure — clock shell, mode buttons, time display, start/stop/reset/lap controls |
+| `digi.js` | All mode logic — clock, stopwatch, timer countdown, alarm, input creation, state machine |
+| `digi.css` | Dark theme with pink time display, clock border styling, timer/alarm input appearance |
 
 ---
 
-## Features
+## How It Works
 
-- **Clock** — live time display, updates every second
-- **Stopwatch** — start, stop, reset, and lap recording
-- **Timer** — countdown with hours/minutes/seconds inputs; alerts when time is up
-- **Alarm** — set an alarm by hour, minute, and AM/PM; fires an alert at the set time
-- Switching modes swaps the display and shows/hides the relevant controls
-- A small running clock in the top bar stays visible while in non-clock modes
+The UI is a single clock shell. `digi.js` manages a `prevop` variable that tracks the current mode and drives all transitions.
+
+```
+Mode state machine (prevop)
+  "Clock"     → live setInterval updating .time every second
+  "StopWatch" → elapsed ms counter; Start/Stop/Reset/Lap buttons active
+  "Timer"     → dynamically injects <input type="number"> fields into .time div;
+                countdown via setInterval; alerts on zero
+  "Alarm"     → injects hour/minute/AM-PM inputs; polls current time every second;
+                alerts on match
+```
+
+Switching modes:
+- Stops the previous mode's interval
+- Clears or replaces the `.time` div content
+- Shows/hides the bottom control bar and sidebar arrows
+- The top bar shows a small running clock whenever a non-Clock mode is active
+
+The ▲/▼ arrows adjust whichever input field is currently focused (`activeInput`). For the AM/PM field they toggle between "AM" and "PM" instead of incrementing.
 
 ---
 
 ## Usage
 
-Open `digi.html` in any browser — no server required.
-
-```
-digi.html
-digi.css
-digi.js
-```
-
-Use the left panel (StopWatch / Timer / Alarm) to switch modes. Click a time input field to focus it, then use the ▲/▼ arrows to adjust the value.
+Open `digi.html` directly in any browser.
 
 ---
 
 ## Known Limitations / TODOs
 
-- Timer alert uses `window.alert()` — tab must be in focus for it to fire
-- Alarm compares time as a formatted string once per second; could miss by up to ~1 second
-- No sound — alarm and timer notifications are alerts only
-- Lap list has no max cap and no clear button
-- `stopTimer()` and `resetTimer()` functions are referenced in the event listener but not defined
+- `stopTimer()` and `resetTimer()` are called from the bottom-bar click handler but are never defined — clicking Stop or Reset in Timer mode silently does nothing
+- Alarm fires `window.alert()` — the tab must be in the foreground
+- Alarm comparison is string-based on a once-per-second poll; could miss by up to one second
+- Lap list has no cap and no clear button
+- `activeInput` is used before it is ever assigned if the arrows are clicked before focusing a timer/alarm input field
